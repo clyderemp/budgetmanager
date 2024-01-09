@@ -15,17 +15,8 @@ $(function(){
           // https://firebase.google.com/docs/reference/js/auth.user
           const uid = user.uid;
           console.log('logged in: '+uid);
-          /**
-           * SEND USER TO DASHBOARD IF LOGGED IN
-           */
-          var currentPage = currentLocation.pathname.toString();
-          if(currentPage=='/signup.html' || currentPage=='/index.html'){
-            getDoc(doc(db, "users", uid)).then(docSnap => {
-                if (docSnap.exists()) {
-                    window.location.href = "dashboard/user/home/index.html";
-                } else {
-                  logOut();
-                }
+                window.location.href = "dashboard/user/home/index.html";
+
             });
           }
 
