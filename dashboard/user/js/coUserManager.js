@@ -137,7 +137,7 @@ function deleteFromFirestoreDB(item_id){
  */
 function saveEditReportToDB(item_id, uid, docData){
 
-    updateDoc(doc(db, "users/"+uid+"/co_users/", item_id ), docData)
+    updateDoc(doc(db, "users/"+uid+"/co_users", item_id ), docData)
                 .then(function(){
                 //window.alert("Saved!");
                 window.location.href = "view.html";

@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "budget-web-2022",
+    "mybudgetpal": "budget-web-2022"
+  },
+  "targets": {},
+  "etags": {}
+}

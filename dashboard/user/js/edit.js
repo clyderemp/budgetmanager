@@ -68,7 +68,7 @@ $(function(){
 
 
 
-      $('#edit-submitReport').click(function(){
+      $('#edit-item-submitReport').click(function(){
         var title = $('#edit-title').val();
         var note = $('#edit-note').val();
         var category = $('#edit-category').val();

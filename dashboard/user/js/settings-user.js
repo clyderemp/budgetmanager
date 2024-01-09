@@ -169,12 +169,10 @@ function deleteUserData(collection_ref, doc_id){
  */
 function saveEditReportToDB(uid, docData){
 
-  window.onbeforeunload = function () {
     //window.scrollTo(0, 0);
-    updateDoc(doc(db, "users/", uid ), docData);
-    console.log('here')
-  }
-  window.location.reload();
+    updateDoc(doc(db, "users", uid ), docData).then(function(){
+      window.location.reload();
+    });
 }
 
 function updateUsersEmail(new_email){
