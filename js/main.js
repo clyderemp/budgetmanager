@@ -22,7 +22,7 @@ $(function(){
           if(currentPage=='/signup.html' || currentPage=='/index.html'){
             getDoc(doc(db, "users", uid)).then(docSnap => {
                 if (docSnap.exists()) {
-                    window.location.href = "dashboard/user/home/index.html";
+                    window.location.replace("dashboard/user/home/index.html");
                 } else {
                   logOut();
                 }
@@ -34,7 +34,7 @@ $(function(){
             handleUserInputWhenLoggedOut();
             var currentPage = currentLocation.pathname.toString();
             if(currentPage=='/dashboard.html'){
-                window.location.href = "index.html";
+                window.location.replace("index.html");
             }
         }
       });

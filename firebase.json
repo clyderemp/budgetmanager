@@ -1,7 +1,6 @@
 {
   "hosting": {
-    "site": "mybudgetpal",
-    "public": "root",
+    "public": "/",
     "ignore": [
       "firebase.json",
       "**/.*",
