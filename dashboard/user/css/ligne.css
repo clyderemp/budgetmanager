@@ -65,9 +65,9 @@ td{
       td:nth-of-type(1):before { content: "DATE ADDED"; font-weight: bold; }
       td:nth-of-type(2):before { content: "CATEGORY"; font-weight: bold; }
       td:nth-of-type(3):before { content: "TYPE"; font-weight: bold; }
-      td:nth-of-type(4):before { content: "TITLE"; font-weight: bold; }
+      td:nth-of-type(4):before { content: "PAID TO/FROM"; font-weight: bold; }
       td:nth-of-type(5):before { content: "AMOUNT"; font-weight: bold; }
-      td:nth-of-type(6):before { content: "NOTE"; font-weight: bold; }
+      td:nth-of-type(6):before { content: "ITEM NOTE"; font-weight: bold; }
       td:nth-of-type(7):before { content: "SUBMITTED BY"; font-weight: bold; }
       
       #users-table td:nth-of-type(1):before { content: "CO-USER SINCE"; font-weight: bold; }

@@ -2,31 +2,54 @@ import { db } from '../../..//js/firebase.js'
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, setDoc, getDocs, updateDoc, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; 
 
-const expense_types = [
+export const type = [];
+export const expense_types = [
     "Rent",
-    'Dine-Out',
+    'Food: Dining Out',
     "Grocery",
-    "Commute",
-    "Gas",
+    "Transportation: Commute",
+    "Transportation: Gas",
     "Travel",
-    "Household-Expense",
-    "Vehicle-Expense",
+    "Household Expenses",
+    "Vehicle Expenses",
     "Utilities",
     "Personal-Spendings",
     "Recreation",
     "Entertainment",
-    "Monthly-Subscriptions",
-    "Credit-Payment",
-    "Loan-Payment"
+    "Monthly Subscriptions",
+    "Credit Payments",
+    "Loan Payments",
+    "Others"
+];
+export const credit_types = [
+    "Personal Loan",
+    'Credit Card'
+];
+export const savings_type = [
+    "Long Term",
+    'Short Term'
+];
+export const income_type = [
+    "Job Paycheque",
+    'Tax Return'
 ]
+
+export var co_users_data = JSON.parse(localStorage.getItem('co_users_data'));
+export var co_users_id = JSON.parse(localStorage.getItem('co_users_id'));
+
 
 var uid, fname, lname,
     creation_date = new Date();
+
+
 $(function(){
     itemIDGenerator();
-    populateReporter();
-    populateExpenseCategory();
+    
+    var currentPage = window.location.pathname.toString();
 
+    if(currentPage.includes('report/add.html')){
+        populateReporter();
+    }
     $('#reportedBy-other').click(function(){
         console.log('other clicked');
         $('#otherReporter-name').prop("disabled", false);
@@ -36,19 +59,35 @@ $(function(){
      * IF EXPENSE IS CLICKED, DO THIS
      */
     $('#add-category').change(function(){
+
         if($('#add-category').val() == "expenses"){
-            $('#expenseType-card').removeAttr('hidden');
-            $('#expenseType-card').show();
+            populateType(expense_types);
+            $('#type-card').removeAttr('hidden');
+            $('#type-card').show();
+        }
+        else if($('#add-category').val() == "savings"){
+            populateType(savings_type);
+
+            $('#type-card').removeAttr('hidden');
+            $('#type-card').show();
+        }else if($('#add-category').val() == "income"){
+            populateType(income_type);
+
+            $('#type-card').removeAttr('hidden');
+            $('#type-card').show();
+        }else if($('#add-category').val() == "credit"){
+            populateType(credit_types);
+
+            $('#type-card').removeAttr('hidden');
+            $('#type-card').show();
         }
         else{
-            $('#expenseType-card').hide();
+            $('#type-card').hide();
         }
     });
 
     /**IF ADD NEW PERSON IS CLICKED*/
-
     $('#add-reportedBy').change(function(){
-        console.log('report change')
         if($('#add-reportedBy').val() == "ADD NEW PERSON"){
             $('#otherReporter-name').removeAttr('hidden');
             $('#otherReporter-name').show();
@@ -64,8 +103,8 @@ $(function(){
         var title = $('#add-title').val();
         var note = $('#add-note').val();
         var category = $('#add-category').val();
-        var expenseType = $('#add-expenseType').val();
-        var value = $('#add-value').val();
+        var type = $('#add-type').val();
+        var value = parseFloat($('#add-value').val());
         var date = $('#add-date').val();
         var reporter = $('#add-reportedBy').val();
         var paymentMethod = $('#add-paymentMethod').val();
@@ -78,7 +117,7 @@ $(function(){
             note: note,
             date: date,
             category: category,
-            expenseType: expenseType,
+            type: type,
             value: value,
             reportedBy: reporter,
             paymentMethod: paymentMethod,
@@ -152,62 +191,47 @@ function itemIDGenerator(){
     );
     localStorage.setItem('item_id', item_id);
     $('#item_id').text(item_id);
-    console.log(item_id);
 }
 /**
  * MAINLY HANDLE THE POPULATION OF THE EXPENSE CATEGORY
  */
-function populateExpenseCategory(){
-
-   for(var index = 0; index < expense_types.length; index++){
-        var option_template = "<option value="+expense_types[index]+">"+expense_types[index]+"</option>";
-        $('#add-expenseType').append(option_template);
-        $('#edit-expenseType').append(option_template);
+export function populateType(category_type){
+    var type = [];
+        type = category_type;
+        $('#add-type').html('<option value="N/A" selected>Select the type</option>');
+        $('#edit-type').html('<option value="N/A" selected>Select the type</option>');
+   for(var index = 0; index < type.length; index++){
+        var option_template = "<option value="+JSON.stringify(type[index])+">"+type[index]+"</option>";
+        $('#add-type').append(option_template);
+        $('#edit-type').append(option_template);
    }
 }
 /**
  * POPULATE THE USERS AND CO USERS
  */
-function populateReporter(){
-    var user = localStorage.getItem('fullname');
-
+export async function populateReporter(){
+    var user = JSON.parse(localStorage.getItem('userData'));
+    console.log(user)
+        user = user.fname + ' '+ user.lname;
     const reporter = [
         "Me - "+user,
    ]
-    const auth = getAuth();
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-          // User is signed in, see docs for a list of available properties
-          // https://firebase.google.com/docs/reference/js/auth.user
-          const uid = user.uid;
-         
-          const query = getDocs(collection(db, "users/"+uid+'/co_users'));
 
-          if(query.empty){
-            console.log ('Empty Course Query');
-            }
-            else{
-                query.then(function(query) {
-                    query.forEach(doc => {
-                        var fname = doc.data().fname;
-                        var lname = doc.data().lname;
-                        var co_users = fname+' '+lname;
-                        
-                        //ADD TO ARRAY
-                        reporter.push(co_users);                     
-                    });
-                    //POPULATE THE DROPDOWN USING THE ARRAY VALUES
-                    for(var index = 0; index < reporter.length; index++){
-                        if(index == 0){
-                            var option_template = "<option selected value="+reporter[index]+">"+reporter[index]+"</option>";
-                        }
-                        else{
-                            var option_template = "<option value="+reporter[index]+">"+reporter[index]+"</option>";
-                        }
-                            $('#add-reportedBy').append(option_template);
-                    }
-                })
-            }
-        }
-    });
+   for(var i=0; i<co_users_id.length; i++){
+    var data = co_users_data[co_users_id[i]];
+    var fname = data.fname,
+        lname = data.lname,
+        co_users = fname+' '+lname;
+                       
+        //ADD TO ARRAY
+        reporter.push(co_users);
+        
+   }
+
+   for(var index = 0; index < reporter.length; index++){
+        var option_template = "<option value="+JSON.stringify(reporter[index])+">"+reporter[index]+"</option>";
+
+        $('#add-reportedBy').append(option_template);
+        $('#edit-reportedBy').append(option_template);
+    }
 }

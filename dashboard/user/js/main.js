@@ -51,15 +51,14 @@ function retrieveUserDataFromFirestore(uid){
     getDoc(doc(db, "users", uid)).then(docSnap => {
         if (docSnap.exists()) {
           userData = docSnap.data();
+          localStorage.setItem('userData', JSON.stringify(userData));
           retrieveCoUsersData(uid);
           retrieveDataForSettings(userData);
-
           var fname = userData.fname;
           var lname = userData.lname;
           var lastDelete = userData.lastDelete;
           var lastSave = userData.lastSave;
           var new_account = userData.new_account;
-
           var currentPage = window.location.pathname.toString();
           try{
             loadProfile(userData);
@@ -69,25 +68,6 @@ function retrieveUserDataFromFirestore(uid){
           //$('#home-Modal').show();
           if(new_account){
             if(!currentPage.includes('settings')){
-              var html_modal = '<div id="SettingsModal" class="modal">'+
-                                  '<div class="modal-content" style="margin-top:15%;">'+
-                                   '<p id="EditText"></p>'+
-                                    '<h5 id="settings-modalQuestion"></h5>'+
-                                    '<div class="pt-4 finalQuestion">'+
-                                      '<div class="card">'+
-                                        '<div class="card-header">'+
-                                          '<h5 class="card-title mb-0">Enter Password to CONFIRM:</h5>'+
-                                        '</div>'+
-                                        '<div class="card-body">'+
-                                          '<input type="password" class="form-control" placeholder="Password" id="settings-password">'+
-                                        '</div>'+
-                                      '</div>'+
-                                      '<button class="btn btn-danger btn-lg" id="confirm-delete">Confirm</button>'+
-                                      '<button class="btn btn-secondary btn-lg cancel-btn">Discard</button>'+
-                                    '</div>'+
-                                  '</div>'+
-                                '</div>';
-              console.log('new')
               $('#home-Modal').show();
               $('#modal-text').html('Welcome!<br>Since your account is new, you will be redirected to a page where you will need to input some information to help us better analyze your data!');
               $('#confirm-new').click(function(){
@@ -101,7 +81,6 @@ function retrieveUserDataFromFirestore(uid){
         }
     });
 }
-
 function retrieveCoUsersData(uid){
             
   const query = getDocs(collection(db, "users/"+uid+'/co_users'));
@@ -140,9 +119,6 @@ function feedDataToPage(fname, lname, lastDelete, lastSave){
     $('#last-delete-txt').append(lastDelete);
 }
 
-function feedDataToSettings(){
-
-}
 
 function logout(){
   const auth = getAuth();

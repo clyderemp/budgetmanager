@@ -84,8 +84,8 @@ $(function(){
       
     });
 
-    $('#confirm-delete').click(function(){
-      
+    $('#confirm-account-delete').click(function(){
+      console.log('confirmed')
       var email = $('#settings-email').val();
       var password = $('#settings-password').val();
 
@@ -99,7 +99,7 @@ $(function(){
               if (doc.exists()) {
                 var docRef = collection(db, "users/"+uid+"/transactions");
                 const query = getDocs(docRef);
-      
+                console.log('here')
                 if(!query.empty){
                   query.then(function(query) {
                     query.forEach(doc => {
@@ -110,6 +110,7 @@ $(function(){
                 }
               }
             }).then(function(){
+              deleteCoUsers(uid);
               deleteUserData('users/', uid);
               deleteUser(user);
             });
@@ -163,6 +164,20 @@ export function retrieveDataForSettings(userData){
 
 function deleteUserData(collection_ref, doc_id){
   deleteDoc(doc(db, collection_ref, doc_id));
+}
+
+function deleteCoUsers(uid){
+  var docRef = collection(db, "users/"+uid+"/co_users");
+  const query = getDocs(docRef);
+    if(!query.empty){
+        query.then(function(query) {
+            query.forEach(doc => {
+              var collection_ref =  "users/"+uid+"/co_users";
+              var doc_id = doc.id;
+              deleteDoc(doc(db, collection_ref, doc_id));
+            });
+        });
+    }
 }
 /**
  * SAVE DATA TO FIRESTORE

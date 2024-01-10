@@ -9,24 +9,22 @@ var co_users = {}
 //GENERATING CO USERS TABLE
 export async function generateCoUsersTable(coUserData_ID, coUserData){
     co_users = coUserData;
+    localStorage.setItem('co_users_data', JSON.stringify(coUserData));
+    localStorage.setItem('co_users_id', JSON.stringify(coUserData_ID));
     for(var i = 0; i < coUserData_ID.length; i++){
         var docData = coUserData[coUserData_ID[i]];
         co_users[coUserData_ID] = docData;
 
         var full_name = docData.fname + ' ' +docData.lname;
         var user_since = docData.createdOn;
-        var table_template = '<tr>'+
-                                                '<td>'+user_since+'</td>'+
-                                                '<td>'+full_name+'</td>'+
-                                                '<td class="btn-container"><button class="btn btn-primary btn-sm edit-btn" id="edit.'+coUserData_ID[i]+'">Edit</button> &nbsp;&nbsp; '+
-                                                '<button class="btn btn-primary btn-sm delete-btn" id="delete.'+coUserData_ID[i]+'">Remove</button></td>'+
-                                            '</tr>';
-                       $('#users-table').append(table_template);
+        var table_template = '<tr>'+'<td>'+user_since+'</td>'+
+                            '<td>'+full_name+'</td>'+
+                            '<td class="btn-container"><button class="btn btn-primary btn-sm edit-btn" id="edit.'+coUserData_ID[i]+'">Edit</button> &nbsp;&nbsp; '+
+                            '<button class="btn btn-primary btn-sm delete-btn" id="delete.'+coUserData_ID[i]+'">Remove</button></td></tr>';
+        $('#users-table').append(table_template);
     }
 
-
       var currentPage = window.location.pathname.toString();
-      console.log(currentPage)
     if(currentPage.includes('/manage-users/edit.html')){
         loadEditPage(docData.fname, docData.lname, docData.dob, docData.uid);
     }
@@ -86,7 +84,6 @@ $(function(){
         var co_user_id = (this.id).split('.');
             co_user_id = co_user_id[1];
         localStorage.setItem('selected_user', this.id);
-        console.log(co_user_id);
         editCoUser(this.id);
         //window.location.href = "edit.html";
     });
@@ -102,7 +99,6 @@ $(function(){
 
     $('#confirm-delete').click(function(){
         var id = $('#DeleteText').text();
-        console.log(id)
         deleteFromFirestoreDB(id);
     });
 

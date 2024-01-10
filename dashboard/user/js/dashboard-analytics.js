@@ -1,6 +1,6 @@
 import { db } from '../../..//js/firebase.js'
-import { userData } from './main.js';
-import { populateExpensesTable, populateTransactionTable } from './transactionReport.js'
+import { userData } from '../js/main.js';
+import { generateTransactionTable } from '../js/transactionManager.js';
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { collection, getDocs} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; 
 
@@ -42,9 +42,7 @@ var budget_percent = [0,0,0];
 var BARGRAPH_last_year_data = [0,0,0,0,0,0,0,0,0,0,0,0];
 var BARGRAPH_this_year_data = [0,0,0,0,0,0,0,0,0,0,0,0];
 
-
-
-var monthly_average_expense, monthly_average_savings, monthly_average_income;
+var credit_payment = 0;
 
 $(function(){
     localStorage.clear();
@@ -96,24 +94,25 @@ export function updateAnalytics(){
                         }).then(function(){
 
                                 //FULL TRANSACTION REPORT
-                                populateTransactionTable();
-                                populateExpensesTable();
+                                    generateTransactionTable(transaction_ID, transactions);
                                 //UPDATE UI AFTER DATA CHANGE
                             try{
                                 updateDashboardUI();
                             }
                             catch(err){
-
+                                //console.log(err);
                             }
                         });
                     }
                 }catch(err){
-                    console.log(err);
+                    //console.log(err);
                 }
             }
             else{
                 console.log('Not on dashboard page');
             }
+        }else{
+            localStorage.clear();
         }
     });
 }
@@ -307,72 +306,112 @@ function updateCreditBalance(){
 
     var credit_balance = userData.credit_balance;
     var credit_max = userData.credit_max;
-    var credit_payment = 0;
+
+    if(isFinite(credit_max) && isFinite(credit_balance) && transaction_ID.length == 0){
+        
+        $('#credit-balance-value').text('$'+convertTo2_Decimals(credit_balance));
+        $('#utilization-percent-value').text('('+convertTo2_Decimals((credit_balance/credit_max)*100)+'% Utilization)');
+        $('#credit-max-value').text('Credit Limit: $'+numberWithCommas(convertTo2_Decimals(credit_max)));
+        checkUtilization((credit_balance/credit_max)*100);
+    }
 
     for(var i=0; i < transaction_ID.length; i++){
-
         var docData = transactions[transaction_ID[i]];
+            if(isInfinite(docData.value)){
+                docData.value = 0;
+            }
+            
+        try{
+            
+            if(docData.paymentMethod == 'credit' || docData.type.includes('Loan')){
+                credit_balance += parseFloat(docData.value);
+            }
 
-        if(docData.paymentMethod == 'credit' || docData.expenseType.includes('Loan')){
-            credit_balance += parseFloat(docData.value);
+            if(docData.type.includes('Credit Payments') || docData.type.includes('Loan Payments')){
+                credit_balance -= parseFloat(docData.value); //Remove from balance
+                credit_payment += parseFloat(docData.value); //Add to total credits paid
+                localStorage.setItem('credit_payment', credit_payment);
+            }
+
+            //credit_balance -= credit_payment;
+            $('#credit-balance-value').text('$'+convertTo2_Decimals(credit_balance));
+            $('#credit-max-value').text('(Max: $'+credit_max+')');
+            $('#utilization-percent-value').text(convertTo2_Decimals((credit_balance/credit_max)*100)+'% Utilization');
+            checkUtilization((credit_balance/credit_max)*100);
+            
+        }catch(err){
+            console.log(err);
         }
+            
+    }
 
-        if(docData.expenseType.includes('Credit-Payment') || docData.expenseType.includes('Loan')){
-            credit_balance -= parseFloat(docData.value); //Remove from balance
-            credit_payment += parseFloat(docData.value); //Add to total credits paid
-            localStorage.setItem('credit_payment', credit_payment);
-        }
-
-        //credit_balance -= credit_payment;
-        $('#credit-balance-value').text('$'+convertTo2_Decimals(credit_balance));
-        $('#credit-max-value').text('(Max: $'+credit_max+')');
-        $('#utilization-percent-value').text(convertTo2_Decimals((credit_balance/credit_max)*100)+'% Utilization');
-
-        if(credit_balance > 30 && credit_balance < 59){
+    function checkUtilization(Utilization){
+        if(Utilization > 30 && Utilization < 59){
             $('#utilization-percent-value').addClass('text-warning');
-        }else if(credit_balance > 60){
+        }else if(Utilization > 60){
             $('#utilization-percent-value').addClass('text-danger');
         }else{
             $('#utilization-percent-value').addClass('text-success');
         }
-            
     }
 }
 /**
  * UPDATE SPENDING ACCOUNT
  */
 function updateSpendingAccount(){
-
+    
     var income = parseFloat(localStorage.getItem('monthly_income_value'));
     var expenseBudget = parseFloat(userData.expenseBudget),
         savingsBudget = parseFloat(userData.savingsBudget),
-        creditPaymentBudget = parseFloat(userData.creditPaymentBudget),
-        monthly_expense = parseFloat(localStorage.getItem('monthly-expense-value')),
-        monthly_savings = localStorage.getItem('month-total-savings'),
-        monthly_credit = localStorage.getItem('credit_payment');
+        creditPaymentBudget = parseFloat(userData.creditPaymentBudget);
     
+    var monthly_expense = ($('#monthly-expense-value').html()).split('$');
+        monthly_expense = parseFloat(monthly_expense);
+
+    var monthly_savings = ($('#total-savings-value').html()).split('$');
+        monthly_savings = parseFloat(monthly_savings[1]);
+
+    var monthly_credit = ($('#credit-balance-value').html()).split('$');
+        monthly_credit = parseFloat(monthly_credit[1]);
+    
+    console.log( expenseBudget, savingsBudget, creditPaymentBudget);
+    console.log( monthly_expense, monthly_savings, monthly_credit);
+
     var remaining_expense = (income*(expenseBudget/100)) - monthly_expense,
     remaining_savings = (income*(savingsBudget/100)) - monthly_savings,
     remaining_creditPayment = (income*(creditPaymentBudget/100)) - monthly_credit;
 
     var spending_balance = remaining_expense + remaining_savings + remaining_creditPayment;
-    $('#spending-acc-value').text('$'+numberWithCommas(convertTo2_Decimals(spending_balance)));
-    var percent = (spending_balance/income)*100;
-    if(percent >= 70){
-        $('#spending-acc-text').addClass('text-success');
-    } else if(percent < 70 && percent > 40){
-        $('#spending-acc-text').addClass('text-warning');
-    } else{
-        $('#spending-acc-text').addClass('text-danger');
+    if(isFinite(spending_balance)){
+        $('#spending-acc-value').text('$'+numberWithCommas(convertTo2_Decimals(spending_balance)));
+        var percent = (spending_balance/income)*100;
+        if(percent >= 70){
+            $('#spending-acc-text').addClass('text-success');
+        } else if(percent < 70 && percent > 40){
+            $('#spending-acc-text').addClass('text-warning');
+        } else{
+            $('#spending-acc-text').addClass('text-danger');
+        }
+        $('#spending-acc-text').text(convertTo2_Decimals(percent)+'%');
+        $('#spending-acc-text-after').text('of your income is left');
     }
-    $('#spending-acc-text').text(convertTo2_Decimals(percent)+'%');
-    $('#spending-acc-text-after').text('of your income is left');
+    else{
+        $('#spending-acc-value').text('$0.00');
+        $('#spending-acc-text').text('');
+        $('#spending-acc-text-after').text('No Data Available');
+    }
+
 }
 /**
  * HIGHEST AND LOWEST INCOME
  */
 function updateHighestAndLowestINCOME_Months(){
     var max_date, min_date;
+   $('#highest-income-value').text('$0.00');
+   $('#lowest-income-value').text('$0.00');
+   $('#highest-income-text').text('No Data Available');
+   $('#lowest-income-text').text('No Data Available');
+    
     for(var i = 0; i < transaction_ID.length; i++){
         var docData = transactions[transaction_ID[i]];
         if( (docData.category) == 'income' ){
@@ -426,7 +465,10 @@ function updateHighestAndLowestINCOME_Months(){
 function updateHighestAndLowestEXPENSES_Months(){
     var year_today = (new Date()).getFullYear();
     var max_date, min_date;
-    var uid = localStorage.getItem('uid');
+    $('#highest-expense-value').text('$0.00');
+    $('#lowest-expense-value').text('$0.00');
+    $('#highest-expense-text').text('No Data Available');
+    $('#lowest-expense-text').text('No Data Available');
 
     for(var i = 0; i < transaction_ID.length; i++){
         var docData = transactions[transaction_ID[i]];
@@ -483,6 +525,8 @@ function updateTotalSavingsPanel(){
 
     $('#total-savings-value').text('$0.00');
     $('#total-savings-percent').text('0%');
+    var savings_goal = userData.savings_goal;
+            $('#savings-goal-value').text('$'+numberWithCommas(convertTo2_Decimals(savings_goal)));
 
     var year_today = (new Date()).getFullYear();
     var current_month_index = parseInt((new Date()).getMonth());
@@ -507,17 +551,13 @@ function updateTotalSavingsPanel(){
             }
 
             var date = (docData.date).split('-');
-
+            console.log(date);
             if(date[0].includes(year_today.toString()) && date[1] == (current_month_index+1)){
                 monthly_total += parseFloat(docData.value);
                 localStorage.setItem('month-total-savings', monthly_total);
+                console.log(monthly_total)
             }
         }
-    
-        var savings_goal = userData.savings_goal;
-            $('#savings-goal-value').text('$'+numberWithCommas(savings_goal));
-        
-
     }
 }
 /**
@@ -525,6 +565,8 @@ function updateTotalSavingsPanel(){
  */
 function updateTotalYearlySpendingPanel(){
     $('#year-total-expense-year-text').text(year_today);
+    $('#total-expense-value').text('0.00');
+    $('#yearly-trend').text('0.00');
 
     for (var i = 0; i < transaction_ID.length; i++){
         var docData = transactions[transaction_ID[i]];
@@ -616,7 +658,7 @@ function updateMonthlyGraph(){
                 }
         });
     }catch(error){
-        
+        //console.log(error);
     }
 }
 function updateBudgePIE(){
@@ -636,29 +678,36 @@ function updateBudgePIE(){
 
     var pie_data = [expense, savings, credit];
 
-    var monthly_expense = localStorage.getItem('monthly-expense-value');
-    var monthly_savings = localStorage.getItem('month-total-savings');
-    var monthly_credit = localStorage.getItem('credit_payment');
+    var monthly_expense = ($('#monthly-expense-value').html()).split('$');
+        monthly_expense = parseFloat(monthly_expense);
+
+    var monthly_savings = ($('#total-savings-value').html()).split('$');
+        monthly_savings = parseFloat(monthly_savings[1]);
+
+    var monthly_credit = credit_payment;
 
     var value = [monthly_expense, monthly_savings, monthly_credit];
     var legend_strings = []
+    $('#pieGraph-text-below').html('');
+
     for(var i = 0; i<budget_percent.length; i++){
-            if(isInfinite(value[i])){
-                value[i] = 0;
-            }
+            
+            var title = '<tr>'+'<td> Budget for '+categories[i]+' ('+budget_percent[i]+'%)</td>'+'<td class="text-end">';
+            var max = '/ <span id="'+categories[i]+'-max">$'+numberWithCommas(convertTo2_Decimals(pie_data[i]))+'</span></td></tr>';
+
             if(value[i] > pie_data[i]){
-                var html = '<tr>'+
-                            '<td> Budget for '+categories[i]+' ('+budget_percent[i]+'%)</td>'+
-                            '<td class="text-end"><span class="text-danger" id="'+categories[i]+'-value">$'+numberWithCommas(convertTo2_Decimals(value[i]))+
-                            '</span> / <span id="'+categories[i]+'-max">$'+numberWithCommas(convertTo2_Decimals(pie_data[i]))+'</span></td>'+
-                            '</tr>';
-            }else if(value[i] < pie_data[i]){
-                var html = '<tr>'+
-                            '<td> Budget for '+categories[i]+' ('+budget_percent[i]+'%)</td>'+
-                            '<td class="text-end"><span class="text-success" id="'+categories[i]+'-value">$'+numberWithCommas(convertTo2_Decimals(value[i]))+
-                            '</span> / <span id="'+categories[i]+'-max">$'+numberWithCommas(convertTo2_Decimals(pie_data[i]))+'</span></td>'+
-                            '</tr>';
+                var current = '<span class="text-danger" id="'+categories[i]+'-value">$'+numberWithCommas(convertTo2_Decimals(value[i]))+'</span>';              
             }
+            else if(value[i] < pie_data[i]){
+                var current = '<span class="text-success" id="'+categories[i]+'-value">$'+numberWithCommas(convertTo2_Decimals(value[i]))+'</span>';   
+            }
+            else{
+                var current = '<span class="text-muted" id="'+categories[i]+'-value">$'+numberWithCommas(convertTo2_Decimals(value[i]))+'</span>';   
+            }
+
+            console.log(categories[i], value[i], pie_data[i]);
+
+            var html = title+current+max;
                 legend_strings[i] = categories[i]+'('+budget_percent[i]+'%)';
                 $('#pieGraph-text-below').append(html);
     }
@@ -674,7 +723,7 @@ function updateBudgePIE(){
 				data: {
 					labels: legend_strings,
 					datasets: [{
-						data: pie_data,
+						data: budget_percent,
 						backgroundColor: [
 							window.theme.warning,
 							window.theme.success,
@@ -786,7 +835,6 @@ function updateTransactionTable(){
         var docData = transactions[transaction_ID[i]];
         var date = (docData.date).replaceAll('-0', '-');
         try{
-            console.log(date, today_date)
             if(date == today_date || date.includes(today_date)){
                 var title = docData.transaction;
                 var note = docData.note;
@@ -804,7 +852,6 @@ function updateTransactionTable(){
 
                 var table_template = '<tr>'+
                                         '<td>'+title+'</td>'+
-                                        '<td class="d-none d-xl-table-cell">'+note+'</td>'+
                                         '<td class="d-none d-xl-table-cell"> $'+numberWithCommas(convertTo2_Decimals(value))+'</td>'+
                                         '<td><span class="badge bg-'+color+'">'+category+'</span></td>'+
                                         '<td class="d-none d-md-table-cell">'+reportedBy+'</td>'+

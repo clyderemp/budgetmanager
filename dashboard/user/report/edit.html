@@ -21,8 +21,9 @@
 
 	<script type="module" src="../../../js/firebase.js"></script>
 	<script type="module" src="../js/main.js"></script>
-	<script type="module" src="../js/add.js"></script>
+	<script type="module" src="../js/transactionManager.js"></script>
 	<script type="module" src="../js/edit.js"></script>
+
 
 	<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -204,6 +205,14 @@
 						<div class="col-12 col-lg-12">
 							<div class="card">
 								<div class="card-header">
+									<h5 class="card-title mb-0">Item ID</h5>
+								</div>
+								<div class="card-body">
+									<input type="text" class="form-control" placeholder="ID" id="edit-itemID" disabled>
+								</div>
+							</div>
+							<div class="card">
+								<div class="card-header">
 									<h5 class="card-title mb-0">Paid to/from:</h5>
 								</div>
 								<div class="card-body">
@@ -229,18 +238,19 @@
 											<option value="expenses" id="expenses">Expenses</option>
 											<option value="savings">Savings</option>
 											<option value="income">Income</option>
+											<option value="credit">Credit</option>
 										</select>
 									</div>
 								</div>
 							</div>
-							<div class="col-12 col-lg-12" id="EditExpenseType-card" hidden>
+							<div class="col-12 col-lg-12" id="edit-type-card">
 								<div class="card">
 									<div class="card-header">
-										<h5 class="card-title mb-0">Expense Type:</h5>
+										<h5 class="card-title mb-0">Type:</h5>
 									</div>
 									<div class="card-body">
-										<select class="form-select mb-3" id="edit-expenseType">
-											<option value="N/A" selected>Select the category</option>
+										<select class="form-select mb-3" id="edit-type">
+											<option value="N/A" selected>Select the type</option>
 										</select>
 									</div>
 								</div>

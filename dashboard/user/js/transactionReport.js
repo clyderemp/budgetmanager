@@ -2,16 +2,17 @@ import { db } from '../../../js/firebase.js';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { collection, doc, setDoc, addDoc, deleteDoc, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"; 
 import { transactions, month_strings, monthly_expense_docID, transaction_ID} from './dashboard-analytics.js';
-import { userData } from './main.js';
+
+export var selected_edit;
 
 $(function(){
 
-    
     $('#report-update').append((new Date()).toUTCString());
 
     $(document).on('click',".edit-btn", function(){
         var id = (this.id).split('.');
-        openEditModal(id[1]);
+        localStorage.setItem('selected_item', id);
+        editItem(id);
     });
     $(document).on('click',".delete-btn", function(){
         var id = (this.id).split('.');
@@ -26,26 +27,25 @@ $(function(){
     $('#confirm-delete').click(function(){
         var item = $('#DeleteText').text();
         var id = item.split(': ');
-        checkToDeleteFromReports(id[1]);
-        //deleteFromFirestoreDB(id[1]);
+        deleteFromFirestoreDB(id[1]);
     });
     $('#confirm-edit').click(function(){
         window.location.href = "edit.html";
     });
-    console.log(userData)
 
 });
 
 export async function populateTransactionTable(){
     for(var i = 0 ; i < transaction_ID.length; i++){
         var docData = transactions[transaction_ID[i]];
+            try{
                 var id = docData.item_id;
                 var title = docData.transaction;
                 var note = docData.note;
                 var value = docData.value;
                 var date = reformatDate(docData.date);
                 var category = docData.category.toUpperCase();
-                var type = docData.expenseType.toUpperCase();
+                var type = docData.type.toUpperCase();
                 var reportedBy = docData.reportedBy;
                 
                 if(category == 'EXPENSES'){
@@ -67,8 +67,13 @@ export async function populateTransactionTable(){
                                         '<button class="btn btn-primary btn-sm delete-btn" id="delete.'+id+'">Remove</button></td>'+
                                     '</tr>';
                 $('#full-transaction-table').append(table_template);
+            }
+            catch(err){
+
+            }
     }
 }
+/*
 export async function populateExpensesTable(){
     for(var i = 0 ; i < transaction_ID.length; i++){
         var docData = transactions[transaction_ID[i]];
@@ -99,9 +104,10 @@ export async function populateExpensesTable(){
                                         '<td class="btn-container"><button class="btn btn-primary btn-sm edit-btn" id="edit.'+id+'">Edit</button> &nbsp;&nbsp; '+
                                         '<button class="btn btn-primary btn-sm delete-btn" id="delete.'+id+'">Remove</button></td>'+
                                     '</tr>';
-                $('#full-transaction-table').append(table_template);
+                $('#transaction-table').append(table_template);
     }
 }
+*/
 
 
 function openDeleteModal(id){
@@ -121,64 +127,19 @@ function openDeleteModal(id){
     $('#DeleteText').text("ITEM ID: "+id);
 }
 
-function openEditModal(id){
-    // Get the modal
-        localStorage.setItem('selected_edit', id);
-        var modal = document.getElementById("EditModal");
-
-        var span = document.getElementsByClassName("close")[0];
-
-        modal.style.display = "block";
-
-        span.onclick = function() {
-        modal.style.display = "none";
-        }
-
-        window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
-    $('#EditText').text("ITEM ID: "+id);
-}
-
 function deleteFromFirestoreDB(item_id){
     var uid = localStorage.getItem('uid');
     deleteDoc(doc(db, "users/"+uid+'/transactions', item_id)).
         then(function(err){
+
+            window.alert("Item has been permanently removed!");
             var lastDelete = (new Date()).toDateString().split(' ').slice(1).join(' ');
             var docData = {
                 lastDelete: lastDelete
             };
 
-            updateDoc(doc(db, "users", uid), docData)
-            .then(function(){
-                removeFromReportsDB(item_id);
-                window.alert("Item has been permanently removed!");
-                window.location.href = "transactions-report.html";
-                
-            }).catch((error) => {
-                const errorCode = error.code;
-                const errorMessage = error.message;
-                window.alert(errorMessage);
-            });
-
+            updateDoc(doc(db, "users", uid), docData);
             location.reload();
-    });
-}
-
-function checkToDeleteFromReports(item_id){
-    var uid =  localStorage.getItem('uid');
-    getDoc(doc(db, "users/"+uid+"/transactions/", item_id)).then(docSnap => {
-        if (docSnap.exists()) {
-            var reportType = docSnap.data().category+'_report';
-            var date = (docSnap.data().date).split('-');
-            var year = date[0];;
-            var month_DB = month_strings[parseInt(date[1]-1)];
-            var reportType = docSnap.data().category+'_report';
-            deleteDoc(doc(db, "users/"+uid+"/"+reportType+"/"+year+'_'+month_DB+'/'+year+'_'+month_DB, item_id));
-            deleteFromFirestoreDB(item_id);
-        }
     });
 }
 
