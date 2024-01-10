@@ -14,10 +14,12 @@ $(function(){
           // User is signed in, see docs for a list of available properties
           // https://firebase.google.com/docs/reference/js/auth.user
           const uid = user.uid;
-          console.log('logged in: '+uid);
+          console.log('Redirecting....logged in: '+uid);
+          window.location.replace("dashboard/user/home/index.html");
           /**
            * SEND USER TO DASHBOARD IF LOGGED IN
            */
+          /*
           var currentPage = currentLocation.pathname.toString();
           if(currentPage=='/signup.html' || currentPage=='/index.html'){
             getDoc(doc(db, "users", uid)).then(docSnap => {
@@ -28,17 +30,15 @@ $(function(){
                 }
             });
           }
+          */
 
         } else {
             console.log('logged out');
             handleUserInputWhenLoggedOut();
-<<<<<<< Updated upstream
             var currentPage = currentLocation.pathname.toString();
             if(currentPage=='/dashboard.html'){
                 window.location.replace("index.html");
             }
-=======
->>>>>>> Stashed changes
         }
       });
 
