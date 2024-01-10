@@ -32,10 +32,13 @@ $(function(){
         } else {
             console.log('logged out');
             handleUserInputWhenLoggedOut();
+<<<<<<< Updated upstream
             var currentPage = currentLocation.pathname.toString();
             if(currentPage=='/dashboard.html'){
                 window.location.replace("index.html");
             }
+=======
+>>>>>>> Stashed changes
         }
       });
 
