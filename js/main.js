@@ -15,7 +15,7 @@ $(function(){
           // https://firebase.google.com/docs/reference/js/auth.user
           const uid = user.uid;
           console.log('Redirecting....logged in: '+uid);
-          window.location.replace("/dashboard/user/home/index.html");
+          window.location.replace("//dashboard/user/home/index.html");
           /**
            * SEND USER TO DASHBOARD IF LOGGED IN
            */
