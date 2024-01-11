@@ -37,7 +37,7 @@ $(function(){
           //var currentPage = currentLocation.pathname.toString();
 
           //if(currentPage=='/signup.html' || currentPage=='/index.html'){
-            window.location.replace("/budgetmanager/dashboard/user/home/index.html");
+            window.location.href="/budgetmanager/dashboard/user/home/index.html";
           //}
         }
         else {
