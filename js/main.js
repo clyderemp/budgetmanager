@@ -15,11 +15,7 @@ $(function(){
           // https://firebase.google.com/docs/reference/js/auth.user
           const uid = user.uid;
           console.log('Redirecting....logged in: '+uid);
-<<<<<<< HEAD
-          window.location.replace("//dashboard/user/home/index.html");
-=======
           window.location.replace("/budgetmanager/dashboard/user/home/index.html");
->>>>>>> e672d9083464a08a7547c32dcd8b0d755519b140
           /**
            * SEND USER TO DASHBOARD IF LOGGED IN
            */
