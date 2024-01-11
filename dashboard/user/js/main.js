@@ -34,10 +34,10 @@ $(function(){
           /**
            * SEND USER TO DASHBOARD IF LOGGED IN
            */
-          var currentPage = currentLocation.pathname.toString();
+          //var currentPage = currentLocation.pathname.toString();
 
           //if(currentPage=='/signup.html' || currentPage=='/index.html'){
-            window.location.href = "dashboard/user/index.html";
+            window.location.href = "dashboard/user/home/index.html";
           //}
         }
         else {
